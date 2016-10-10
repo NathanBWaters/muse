@@ -1,15 +1,26 @@
-from flask import Flask
-app = Flask(__name__)
-from ..muse import endpoint
+from multiprocessing import Process
 
-@app.route("/")
-def hello():
-    return "Hello World!"
+from muse.reqresp.http_service import HTTPService
+from muse.pubsub.kafka_service import KafkaService
+from handlerA.handlerA import endpointA
+from messageA.messageA import messageA
 
 
-def getEndpoints():
-    return []
+def startMessageServer():
+    print "-- startMessageServer"
+    svc = KafkaService()
+    svc.addEndpoint("foobar2", messageA)
+    svc.start()
+
+def startHTTPServer():
+    print "-- startHTTPServer"
+    svc = HTTPService()
+    svc.addEndpoint("GET", "/endpointA", endpointA)
+    svc.start()
 
 if __name__ == "__main__":
     print "Starting up"
-    app.run()
+    p = Process(target=startHTTPServer)
+    n = Process(target=startMessageServer)
+    p.start()
+    n.start()
